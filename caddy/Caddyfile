@@ -1,0 +1,7 @@
+{$ARCANE_MANAGER_URL} {
+    tls {
+        dns cloudflare {$CLOUDFLARE_API_TOKEN}
+    }
+    
+    reverse_proxy arcane:3552
+}
