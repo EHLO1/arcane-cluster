@@ -68,6 +68,7 @@ services:
       - arcane-socket-proxy
       - arcane-cloudflare
       - arcane-backend
+      - arcane-cluster
     depends_on:
       - arcane-socket-proxy
       - arcane-postgres
@@ -117,7 +118,7 @@ services:
   arcane-caddy:
     build:
       context: "."
-      dockerfile: "./Dockerfile"
+      dockerfile: "./caddy/Dockerfile"
     image: "caddy:${CADDY_IMAGE_TAG:-latest}"
     container_name: "arcane-caddy"
     environment:
