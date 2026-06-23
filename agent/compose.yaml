@@ -1,0 +1,62 @@
+services:
+  arcane-socket-proxy:
+    image: tecnativa/docker-socket-proxy:${SOCKET_PROXY_IMAGE_TAG:-latest}
+    container_name: arcane-socket-proxy
+    environment:
+      - EVENTS=1
+      - PING=1
+      - VERSION=1
+      # Security critical
+      - AUTH=0
+      - SECRETS=0
+      - POST=1
+      # Not always needed
+      - BUILD=1
+      - COMMIT=0
+      - CONFIGS=0
+      - CONTAINERS=1
+      - DISTRIBUTION=0
+      - EXEC=1
+      - IMAGES=1
+      - INFO=1
+      - NETWORKS=1
+      - NODES=0
+      - PLUGINS=0
+      - SERVICES=1
+      - SESSION=0
+      - SWARM=1
+      - SYSTEM=0
+      - TASKS=1
+      - VOLUMES=1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - arcane-socket-proxy
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+  arcane-edge-agent:
+    image: ghcr.io/getarcaneapp/agent:${ARCANE_IMAGE_TAG:-latest}
+    container_name: arcane-edge-agent
+    volumes:
+      - arcane-edge-agent.data:/app/data
+    environment:
+      - EDGE_AGENT=true
+      - EDGE_TRANSPORT=auto
+      - AGENT_TOKEN=${ARCANE_NODE_ONE_AGENT_TOKEN}
+      - MANAGER_API_URL=${ARCANE_MANAGER_API_URL}
+    networks:
+      - arcane-socket-proxy
+    depends_on:
+      - arcane-socket-proxy
+    restart: unless-stopped
+
+networks:
+  arcane-socket-proxy:
+    driver: bridge
+    name: arcane-socket-proxy
+
+volumes:
+  arcane-edge-agent.data:
+    name: arcane-edge-agent.data
