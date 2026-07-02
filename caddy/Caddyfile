@@ -3,7 +3,7 @@
     https_port 8443
 }
 
-{$APP_URL} {
+{$BASE_URL} {
     tls {
         # FORCE Let's Encrypt so the path is predictable
         issuer acme {

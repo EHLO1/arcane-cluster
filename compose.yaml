@@ -85,14 +85,14 @@ services:
       dockerfile: "./Dockerfile"
     container_name: "caddy"
     environment:
-      - APP_URL=${APP_URL}
+      - BASE_URL=${BASE_URL}
       - "CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}"
       - "SSL_EMAIL=${SSL_EMAIL}"
     restart: "unless-stopped"
     volumes:
       - "./Caddyfile:/etc/caddy/Caddyfile"
       - "caddy.data:/data"
-      - "arcane.certs:/data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/{$APP_URL}"
+      - "arcane.certs:/data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/${BASE_URL}"
 
 networks:
   arcane-cloudflare:
