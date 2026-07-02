@@ -1,7 +1,16 @@
-{$ARCANE_MANAGER_URL} {
+{
+    http_port 8080
+    https_port 8443
+}
+
+{$APP_URL} {
     tls {
-        dns cloudflare {$CLOUDFLARE_API_TOKEN}
+        # FORCE Let's Encrypt so the path is predictable
+        issuer acme {
+            dir https://acme-v02.api.letsencrypt.org/directory
+            dns cloudflare {$CLOUDFLARE_API_TOKEN}
+        }
     }
     
-    reverse_proxy arcane:3552
+    respond "Certificate Manager"
 }

@@ -1,53 +1,19 @@
 services:
-  arcane-socket-proxy:
-    image: tecnativa/docker-socket-proxy:${SOCKET_PROXY_IMAGE_TAG:-latest}
-    container_name: arcane-socket-proxy
-    environment:
-      - EVENTS=1
-      - PING=1
-      - VERSION=1
-      # Security critical
-      - AUTH=0
-      - SECRETS=0
-      - POST=1
-      # Not always needed
-      - BUILD=1
-      - COMMIT=0
-      - CONFIGS=0
-      - CONTAINERS=1
-      - DISTRIBUTION=0
-      - EXEC=1
-      - IMAGES=1
-      - INFO=1
-      - NETWORKS=1
-      - NODES=0
-      - PLUGINS=0
-      - SERVICES=1
-      - SESSION=0
-      - SWARM=1
-      - SYSTEM=0
-      - TASKS=1
-      - VOLUMES=1
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    networks:
-      - arcane-socket-proxy
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-
   arcane:
     image: ghcr.io/getarcaneapp/manager:${ARCANE_IMAGE_TAG:-latest}
     container_name: arcane
     volumes:
       - arcane.data:/app/data
+      - arcane.certs:/certs
     environment:
       - PUID=1000
       - PGID=1000
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
       - JWT_SECRET=${JWT_SECRET}
       - APP_URL=${APP_URL}
-      - DOCKER_HOST=tcp://arcane-socket-proxy:2375
+      - TLS_ENABLED=${ARCANE_TLS_ENABLED}
+      - TLS_CERT_FILE=${ARCANE_TLS_CERT_FILE}
+      - TLS_KEY_FILE=${ARCANE_TLS_KEY_FILE}
       - POSTGRES_DB=arcane
       - POSTGRES_USER=${POSTGRES_USER:-arcane}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -65,12 +31,10 @@ services:
       - OIDC_PROVIDER_LOGO_URL=${OIDC_PROVIDER_LOGO_URL:-https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/pocket-id.svg}
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@arcane-postgres:5432/${POSTGRES_DB}
     networks:
-      - arcane-socket-proxy
       - arcane-cloudflare
       - arcane-backend
-      - arcane-cluster
     depends_on:
-      - arcane-socket-proxy
+      - arcane-caddy
       - arcane-postgres
     healthcheck:
       test: ['CMD-SHELL', 'curl -fsS http://localhost:3552/api/health >/dev/null || exit 1']
@@ -81,7 +45,7 @@ services:
     restart: unless-stopped
 
   arcane-postgres:
-    image: postgres:${POSTGRES_IMAGE_TAG:-18-alpine}
+    image: postgres:${POSTGRES_IMAGE_TAG:-17-alpine}
     container_name: arcane-postgres
     restart: unless-stopped
     networks:
@@ -114,40 +78,35 @@ services:
       - arcane-cloudflare
     restart: unless-stopped
 
-  # Caddy - Reverse Proxy for Arcane Cluster + TLS
+  # Caddy - Abused for Certificates
   arcane-caddy:
     build:
       context: "."
-      dockerfile: "./caddy/Dockerfile"
-    container_name: "arcane-caddy"
+      dockerfile: "./Dockerfile"
+    container_name: "caddy"
     environment:
-      - "ARCANE_MANAGER_URL=${ARCANE_MANAGER_URL}"
+      - APP_URL=${APP_URL}
       - "CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}"
       - "SSL_EMAIL=${SSL_EMAIL}"
-    networks:
-      - "arcane-cluster"
     restart: "unless-stopped"
     volumes:
-      - "./caddy/Caddyfile:/etc/caddy/Caddyfile:ro"
-      - "arcane-caddy.data:/data"
+      - "./Caddyfile:/etc/caddy/Caddyfile"
+      - "caddy.data:/data"
+      - "arcane.certs:/data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/{$APP_URL}"
 
 networks:
-  arcane-socket-proxy:
-    driver: bridge
-    name: arcane-socket-proxy
   arcane-cloudflare:
     driver: bridge
     name: arcane-cloudflare
   arcane-backend:
     driver: bridge
     name: arcane-backend
-  arcane-cluster:
-    driver: bridge
-    name: arcane-cluster
 
 volumes:
   arcane.data:
     name: arcane.data
+  arcane.certs:
+    name: arcane.certs
   arcane-postgres.data:
     name: arcane-postgres.data
   arcane-caddy.data:
