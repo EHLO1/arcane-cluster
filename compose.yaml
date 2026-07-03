@@ -3,6 +3,7 @@ services:
     image: ghcr.io/getarcaneapp/manager:${ARCANE_IMAGE_TAG:-latest}
     container_name: arcane
     volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
       - arcane.data:/app/data
       - arcane.certs:/certs
     environment:
