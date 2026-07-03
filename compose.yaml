@@ -34,6 +34,8 @@ services:
     networks:
       - arcane-cloudflare
       - arcane-backend
+    ports:
+      - 3552:3552
     depends_on:
       - arcane-caddy
       - arcane-postgres
