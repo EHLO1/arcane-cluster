@@ -82,7 +82,7 @@ services:
   arcane-caddy:
     build:
       context: "."
-      dockerfile: "./Dockerfile"
+      dockerfile: "./caddy/Dockerfile"
     container_name: "caddy"
     environment:
       - BASE_URL=${BASE_URL}
@@ -90,7 +90,7 @@ services:
       - "SSL_EMAIL=${SSL_EMAIL}"
     restart: "unless-stopped"
     volumes:
-      - "./Caddyfile:/etc/caddy/Caddyfile"
+      - "./caddy/Caddyfile:/etc/caddy/Caddyfile"
       - "arcane-caddy.data:/data"
       - "arcane.certs:/data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/${BASE_URL}"
 
