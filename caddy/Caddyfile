@@ -11,7 +11,6 @@
     tls {
         issuer acme {
             email {$SSL_EMAIL}
-            dir https://acme-v02.api.letsencrypt.org/directory
             dns cloudflare {$CLOUDFLARE_API_TOKEN}
         }
     }

@@ -84,7 +84,7 @@ services:
     build:
       context: "."
       dockerfile: "./caddy/Dockerfile"
-    container_name: "caddy"
+    container_name: "arcane-caddy"
     environment:
       - BASE_URL=${BASE_URL}
       - "CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}"
@@ -93,7 +93,7 @@ services:
     volumes:
       - "./caddy/Caddyfile:/etc/caddy/Caddyfile"
       - "arcane-caddy.data:/data"
-      - "arcane.certs:/data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/${BASE_URL}"
+      - "arcane.certs:/certs"
 
 networks:
   arcane-cloudflare:
