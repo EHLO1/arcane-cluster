@@ -91,7 +91,7 @@ services:
     restart: "unless-stopped"
     volumes:
       - "./Caddyfile:/etc/caddy/Caddyfile"
-      - "caddy.data:/data"
+      - "arcane-caddy.data:/data"
       - "arcane.certs:/data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/${BASE_URL}"
 
 networks:
