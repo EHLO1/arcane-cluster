@@ -1,3 +1,10 @@
+#-[ PROJECT NAME
+name: "arcane-cluster"
+
+# As of July 10th, 2026: I haven't been able to get the Arcane agents working without the local docker socket.
+# Until the agents can run without the local docker socket (or until I figure it out), there's no point running the main instance
+# behind a socket proxy.
+
 services:
   arcane:
     image: ghcr.io/getarcaneapp/manager:${ARCANE_IMAGE_TAG:-latest}
@@ -5,16 +12,12 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - arcane.data:/app/data
-      - arcane.certs:/certs
     environment:
       - PUID=1000
       - PGID=1000
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
       - JWT_SECRET=${JWT_SECRET}
       - APP_URL=${APP_URL}
-      - TLS_ENABLED=${TLS_ENABLED}
-      - TLS_CERT_FILE=${TLS_CERT_FILE}
-      - TLS_KEY_FILE=${TLS_KEY_FILE}
       - POSTGRES_DB=arcane
       - POSTGRES_USER=${POSTGRES_USER:-arcane}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -33,6 +36,7 @@ services:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@arcane-postgres:5432/${POSTGRES_DB}
     networks:
       - arcane-cloudflare
+      - arcane-cluster
       - arcane-backend
     ports:
       - 3552:3552
@@ -48,7 +52,7 @@ services:
     restart: unless-stopped
 
   arcane-postgres:
-    image: postgres:${POSTGRES_IMAGE_TAG:-17-alpine}
+    image: postgres:${POSTGRES_IMAGE_TAG:-17}
     container_name: arcane-postgres
     restart: unless-stopped
     networks:
@@ -63,7 +67,7 @@ services:
   arcane-cloudflared:
     image: cloudflare/cloudflared:${CLOUDFLARED_IMAGE_TAG:-latest}
     container_name: arcane-cloudflared
-    command: "tunnel run"
+    command: tunnel run
     environment:
       - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
     healthcheck:
@@ -73,34 +77,38 @@ services:
       retries: 3
       start_period: 10s
     logging:
-      driver: "json-file"
+      driver: json-file
       options:
-        max-size: "100m"
-        max-file: "10"
+        max-size: 100m
+        max-file: 10
     networks:
       - arcane-cloudflare
     restart: unless-stopped
 
-  # Caddy - Abused for Certificates
+  # Caddy - Reverse Proxy for the Arcane Cluster
   arcane-caddy:
     build:
-      context: "."
-      dockerfile: "./caddy/Dockerfile"
-    container_name: "arcane-caddy"
+      context: .
+      dockerfile: ./caddy/Dockerfile
+    container_name: arcane-caddy
     environment:
       - BASE_URL=${BASE_URL}
-      - "CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}"
-      - "SSL_EMAIL=${SSL_EMAIL}"
-    restart: "unless-stopped"
+      - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
+      - SSL_EMAIL=${SSL_EMAIL}
+    networks:
+      - arcane-cluster
+    restart: unless-stopped
     volumes:
-      - "./caddy/Caddyfile:/etc/caddy/Caddyfile"
-      - "arcane-caddy.data:/data"
-      - "arcane.certs:/certs"
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+      - arcane-caddy.data:/data
 
 networks:
   arcane-cloudflare:
     driver: bridge
     name: arcane-cloudflare
+  arcane-cluster:
+    driver: bridge
+    name: arcane-cluster
   arcane-backend:
     driver: bridge
     name: arcane-backend
@@ -108,8 +116,6 @@ networks:
 volumes:
   arcane.data:
     name: arcane.data
-  arcane.certs:
-    name: arcane.certs
   arcane-postgres.data:
     name: arcane-postgres.data
   arcane-caddy.data:

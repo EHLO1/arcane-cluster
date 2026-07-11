@@ -1,12 +1,3 @@
-{
-    http_port 8080
-    https_port 8443
-
-    events {
-        on cert_obtained exec /usr/local/bin/deploy-certs.sh {event.data.certificate_path} {event.data.private_key_path}
-    }
-}
-
 {$BASE_URL} {
     tls {
         issuer acme {
@@ -14,5 +5,7 @@
             dns cloudflare {$CLOUDFLARE_API_TOKEN}
         }
     }
-    respond "Certificate Manager"
+    # Using h2c:// allows TLS at the front and plain HTTP at the back
+    # AKA this allows gRPC
+    reverse_proxy h2c://arcane:3552
 }

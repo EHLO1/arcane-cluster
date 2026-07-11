@@ -1,12 +1,16 @@
+#-[ PROJECT NAME
+name: "arcane-edge-agent"
+
 # $HOSTNAME is not exported by default, so run this with:
 # HOSTNAME=$(hostname) doppler run -- docker compose up -d
+# I haven't been able to get this to work without the local docker socket. Will retry another day.
 
 services:
   arcane-edge-agent-init:
     build:
-      context: "."
-      dockerfile: "./Dockerfile"
-    container_name: "arcane-edge-agent-init"
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: arcane-edge-agent-init
     environment:
       - ARCANE_MANAGER_URL=${ARCANE_MANAGER_API_URL}
       - AGENT_HOSTNAME=${HOSTNAME}
