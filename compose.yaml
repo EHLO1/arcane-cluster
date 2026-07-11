@@ -38,8 +38,6 @@ services:
       - arcane-cloudflare
       - arcane-cluster
       - arcane-backend
-    ports:
-      - 3552:3552
     depends_on:
       - arcane-caddy
       - arcane-postgres
@@ -97,6 +95,9 @@ services:
       - SSL_EMAIL=${SSL_EMAIL}
     networks:
       - arcane-cluster
+    ports:
+      - 80:80
+      - 443:443
     restart: unless-stopped
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile
